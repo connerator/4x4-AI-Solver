@@ -1,10 +1,3 @@
-"""
-EfficientCube Package
-
-This package supports inference with the models trained in the original paper.
-For training, please refer to the notebooks listed at https://github.com/kyo-takano/efficientcube/blob/main/notebooks.
-"""
-
 import os
 import torch
 from .environments import load_environment

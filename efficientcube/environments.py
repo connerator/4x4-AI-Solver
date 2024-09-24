@@ -1,8 +1,7 @@
 """
-This module contains class implementations for three environments:
-- Rubik's Cube: Cube3
-- 15 Puzzle: Puzzle15
-- Lights Out: LightsOut7
+This module contains class implementations for two environments:
+- 3x3 Rubik's Cube (Cube3)
+- 4x4 Rubik's Cube (Cube4)
 
 Please note that we prioritize readability and reproducibility over speed optimization in this repository.
 """

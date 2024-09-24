@@ -1,6 +1,5 @@
 from efficientcube import EfficientCube, utils
 
-
 if __name__ == '__main__':
 
     """ Specify scramble & search parameter """
