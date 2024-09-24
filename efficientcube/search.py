@@ -8,15 +8,16 @@ import numpy as np
 from copy import deepcopy
 from contextlib import nullcontext
 import torch
+from tqdm import tqdm
 
 @torch.no_grad()
 def beam_search(
         env,
         model,
         beam_width=1024,
-        max_depth=1024, # Any arbitrary number above God's number will do
+        max_depth=64, # Any arbitrary number above God's number will do
         skip_redundant_moves=True,
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu'),
+        device = torch.device('cuda' if torch.cuda.is_available() else 'mps' if torch.backends.mps.is_available() else 'cpu'),
         enable_fp16=False
     ):
     """
@@ -43,7 +44,7 @@ def beam_search(
     """
 
     env_class_name = env.__class__.__name__
-    assert env_class_name in ['Cube3','Puzzle15','LightsOut7']
+    assert env_class_name in ['Cube3','Cube4']
 
     model.eval()
     with torch.cuda.amp.autocast(dtype=torch.float16) if enable_fp16 else nullcontext():
@@ -53,7 +54,7 @@ def beam_search(
             {"state":deepcopy(env.state), "path":[], "value":1.}
         ] # list of dictionaries
 
-        for depth in range(max_depth+1):
+        for depth in tqdm(range(max_depth+1)):
             # TWO things at a time for every candidate: 1. check if solved & 2. add to batch_x
             batch_x = np.zeros((len(candidates), env.state.shape[-1]), dtype=np.int64)
             for i,c in enumerate(candidates):
@@ -96,55 +97,25 @@ def beam_search(
                 for m, value in zip(env.moves_ix_inference, value_distribution): # iterate over all possible moves.
                     # predicted value to expand the path with the given move.
 
-                    if env_class_name=='Cube3':
-                        if c_path and skip_redundant_moves:
-                            if m not in env.moves_ix_available_after[c_path[-1]]:
-                                # Two mutually canceling moves
+                    if c_path and skip_redundant_moves:
+                        if m not in env.moves_ix_available_after[c_path[-1]]:
+                            # Two mutually canceling moves
+                            continue
+                        elif len(c_path) > 1:
+                            # if c_path[-2] == c_path[-1] == m:
+                            if c_path[-2] == c_path[-1] == m:
+                                # Three subsequent moves that could be one
                                 continue
-                            elif len(c_path) > 1:
-                                # if c_path[-2] == c_path[-1] == m:
-                                if c_path[-2] == c_path[-1] == m:
-                                    # Three subsequent moves that could be one
-                                    continue
-                                # elif (
-                                #     c_path[-2][0] == m[0] and len(c_path[-2] + m) == 3
-                                #     and c_path[-1][0] == env.pairing[m[0]]
-                                # ):
-                                elif (
-                                    c_path[-2]//2 == m//2 and c_path[-2]%2 != m%2
-                                    and c_path[-1]//2 == env.pairing_ix[m//2]
-                                ):
-                                    # Two mutually canceling moves sandwiching an opposite face move
-                                    continue
-
-                    elif env_class_name=='Puzzle15':
-                        # Skip **physically** illegal moves (whether you like it or not)
-                        target_loc = np.where(c['state'].reshape(4, 4) == 0)
-                        if m==3: # if m=="R"
-                            if not target_loc[1]: # zero_index (empty slot) on the left
-                                continue
-                        elif m==1: # if m=="D"
-                            if not target_loc[0]: # on the top
-                                continue
-                        elif m==0: # if m=="U"
-                            if target_loc[0]==3: # on the bottom
-                                continue
-                        elif m==2: # if m=="L"
-                            if target_loc[1]==3: # on the right
-                                continue
-
-                        if c_path and skip_redundant_moves:
-                            # Two cancelling moves
-                            if env.pairing_ix[c_path[-1]] == m:
-                                continue
-
-                    elif env_class_name=='LightsOut7':
-                        if skip_redundant_moves:
-                            # logically meaningless operation
-                            if m in c_path:
-                                continue
-                    else:
-                        raise
+                            # elif (
+                            #     c_path[-2][0] == m[0] and len(c_path[-2] + m) == 3
+                            #     and c_path[-1][0] == env.pairing[m[0]]
+                            # ):
+                            # elif (
+                            #     c_path[-2]//2 == m//2 and c_path[-2]%2 != m%2
+                            #     and c_path[-1]//2 == env.pairing_ix[m//2]
+                            # ):
+                            #     # Two mutually canceling moves sandwiching an opposite face move
+                            #     continue
 
                     # add to the next-depth candidates unless 'continue'd.
                     candidates_next_depth.append({
