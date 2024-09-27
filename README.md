@@ -1,5 +1,5 @@
 # 4x4 Rubik's Cube Solver (README in-progress)
-This project applies the methodologies in ___ to solve a harder challenge: the 4x4 Rubik's Cube.
+This project applies the methodologies in [_Self-Supervision is All You Need for Solving Rubik's Cube_](https://arxiv.org/abs/2106.03157) to solve a harder challenge: the 4x4 Rubik's Cube.
 ## Usage
 Run [main.py](main.py), or see the following example usage:
 ```python
@@ -54,11 +54,17 @@ First, the 4x4 is massively more complex than the 3x3. It has over $10^{49}$ per
 Second, God's Number for the 4x4 is (likely) too large for an effective beam search. Current upper bounds are around 55 turns in OBTM, but a depth of 55 in a beam search will, without doubt, fail. This is because, while our search gradually uncovers positions closer and closer to the solved state, this is only possible with a large enough 
 ### My Solution
 Instead of trying to solve the entire 4x4 all at once, we transform it into an intermediate state that we **_know_** is closer to solved. There are many ways to do this, but out of everything I tested, the best way is to reduce it into a 3x3—which we know is only 26 turns from solved! 
-![alt text](https://www.speedcube.com.au/cdn/shop/articles/4x4_reduction_blogimage_280ef415-0606-48fc-8c44-52f1741d26a9.png?v=1723097078)
+![4x4 -> 3x3](https://www.speedcube.com.au/cdn/shop/articles/4x4_reduction_blogimage_280ef415-0606-48fc-8c44-52f1741d26a9.png?v=1723097078)
 In particular, we need to group all the center pieces and pair all the edges. In my initial tests, training models for the two steps separately (centers first, then edges) turned out to be an easy task. Next, I tried a single model on the entire reduction task. With correct hyperparameters, this yielded results after ~10,000 training scrambles. However, when running inference, I noticed something strange. The model seemed to be working, and .  As I eventually figured out, that's because I had missed a crucial detail: parity.
 ### Parity
 As it turns out, simply solving centers and pairing edges does not correctly reduce a 4x4 to a 3x3. This is because our reduction has essentially generated a random 3x3 state. Unfortunately, most states are not solvable! There are 3 invariants that every solvable cube satisfies: corner, edge, and permutation parity. These invariants invalidate 2/3, 1/2, and 1/2 of states respectively. As a result of this, most reduced cubes my model was finding were actually unsolvable. 
 
 Since the original 3x3 model worked out-of-the-box on the reduction task, fixing parity issues became the main challenge of this project. I wrote methods to check each parity type, and also methods to directly scramble centers, edges, and corners separately. These allowed me to generate any type of scramble (fully scrambled, reduced form, only centers solved, etc.) in O(1) time, which sped up many tests.
-### Results
+## Results
+This model successfully solves nearly every scramble it is given. While it fails on occassion given very long scrambles (1000+ turns), it has a 100% success rate on the standard 40-move scrambles used for human competitions.
 
+The following chart displays the result of trials with 100 solves, each scrambled for 1000 turns.
+| Beam Width | Success Rate | Average Solution Length |
+| :---: | :---: | :---: |
+| $2^{11}$ | 69% | 61.6 turns |
+| $2^{13}$ | 98% | 57.4 turns |
