@@ -71,7 +71,7 @@ As it turns out, simply solving centers and pairing edges does not correctly red
 
 Since the original 3x3 model worked out-of-the-box on the reduction task, fixing parity issues became the main challenge of this project. I wrote methods to check each parity type, and also methods to directly scramble centers, edges, and corners separately. These allowed me to generate any type of scramble (fully scrambled, reduced form, only centers solved, etc.) in O(1) time, which sped up many tests.
 
-### My Contributions
+## My Contributions
 - `4x4_train.py`
     - A full notebook to train the 4x4 reduction model, based on `3x3_train.py`
 - `Cube4` class
