@@ -68,4 +68,4 @@ The following chart displays the result of trials with 100 solves, each scramble
 | :---: | :---: | :---: |
 | $2^{11}$ | 69% | 61.6 turns |
 | $2^{13}$ | 98% | 57.4 turns |
-| $2^{15}$ | 100% | 53.4 turns |
+| $2^{15}$ | 100% | 54.2 turns |
