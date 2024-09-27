@@ -33,6 +33,16 @@ print()
 else:
     print('Failed — try a longer beam width.')
 ```
+## Results
+The following chart displays the result of trials with 100 solves, each scrambled for 1000 turns.
+| Beam Width | Success Rate | Average Solution Length (QSTM) |
+| :---: | :---: | :---: |
+| $2^{11}$ | 69% | 61.6 turns |
+| $2^{13}$ | 98% | 57.4 turns |
+| $2^{15}$ | 100% | 54.2 turns |
+
+The solution lengths here are notably low. The 4x4's upper bound for God's Number is 55 in OBTM — while unknown in our metric, QSTM, it's likely much higher since OBTM allows for half-moves and turning multiple slices at once. As a point of reference, God's Number for the 3x3 is 20 in half-moves, but 26 in quarter-moves. Given this fact, an average solution length of 54.2 turns appears significantly lower than the upper bound, perhaps hinting that it's lower than we think.
+
 ## How It Works
 ### Terminology
 | Term | Definition |
@@ -60,12 +70,30 @@ In particular, we need to group all the center pieces and pair all the edges. In
 As it turns out, simply solving centers and pairing edges does not correctly reduce a 4x4 to a 3x3. This is because our reduction has essentially generated a random 3x3 state. Unfortunately, most states are not solvable! There are 3 invariants that every solvable cube satisfies: corner, edge, and permutation parity. These invariants invalidate 2/3, 1/2, and 1/2 of states respectively. As a result of this, most reduced cubes my model was finding were actually unsolvable. 
 
 Since the original 3x3 model worked out-of-the-box on the reduction task, fixing parity issues became the main challenge of this project. I wrote methods to check each parity type, and also methods to directly scramble centers, edges, and corners separately. These allowed me to generate any type of scramble (fully scrambled, reduced form, only centers solved, etc.) in O(1) time, which sped up many tests.
-## Results
-This model successfully solves nearly every scramble it is given. While it fails on occassion given very long scrambles (1000+ turns), it has a 100% success rate on the standard 40-move scrambles used for human competitions.
 
-The following chart displays the result of trials with 100 solves, each scrambled for 1000 turns.
-| Beam Width | Success Rate | Average Solution Length |
-| :---: | :---: | :---: |
-| $2^{11}$ | 69% | 61.6 turns |
-| $2^{13}$ | 98% | 57.4 turns |
-| $2^{15}$ | 100% | 54.2 turns |
+### My Contributions
+- `4x4_train.py`
+    - A full notebook to train the 4x4 reduction model, based on `3x3_train.py`
+- `Cube4` class
+    - Based on the `Cube3` class, adapted to simulate the 4x4 cube instead
+    - `__str__` method to print a 2D unwrapped cube visualization
+    - Edited `reset` method to toggle between resetting to fully solved and a random reduced state ("train" mode)
+    - Edited `is_solved` method to check whether the cube is in a solvable, reduced form
+    - `are_centers_solved` method
+    - `are_edges_solved` method
+    - `scramble_centers` method
+    - `scramble_edges` method with a toggle for scrambling individual edges or edge pairs (preserving parity)
+    - `scramble_corners` method (preserving parity)
+    - Added support for rotations
+    - `rotate_randomly` method
+    - `reset_rotation` method to set the reduced cube to standard orientation (green on the front, white on top). This is important because, unlike the 3x3, the 4x4 has no fixed centers!
+    - `corner_parity` method to check each corner piece's orientation and compute overall parity
+    - `paired_edge_parity` method to check each paired edge's orientation (much more subtle to uncover) and compute overall parity
+    - `permutation_parity` method to analyze the cube's cycle structure and compute its parity
+    - Added support for slice move notation (ex. 2B') and block notation (ex. Fw2)
+- `utils.py`
+    - `convert_4x4_to_3x3` function to convert reduced 4x4 cubes into 3x3 cubes for solving them with the original 3x3 model
+    - `generate_simulator_link` function to construct a link (encoding the scramble and solution) to the Rubik's Cube simulator website [alg.cubing.net](alg.cubing.net)
+- Minimal edits to other files
+    - Added support for the 4x4 everywhere
+    - Wrote the simple pipeline to put everything together and solve the 4x4
