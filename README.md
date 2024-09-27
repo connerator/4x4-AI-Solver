@@ -93,7 +93,7 @@ Since the original 3x3 model worked out-of-the-box on the reduction task, fixing
     - Added support for slice move notation (ex. 2B') and block notation (ex. Fw2)
 - `utils.py`
     - `convert_4x4_to_3x3` function to convert reduced 4x4 cubes into 3x3 cubes for solving them with the original 3x3 model
-    - `generate_simulator_link` function to construct a link (encoding the scramble and solution) to the Rubik's Cube simulator website [alg.cubing.net](alg.cubing.net)
+    - `generate_simulator_link` function to construct a link (encoding the scramble and solution) to the Rubik's Cube simulator website [https://alg.cubing.net/](https://alg.cubing.net/)
 - Minimal edits to other files
     - Added support for the 4x4 everywhere
     - Wrote the simple pipeline to put everything together and solve the 4x4
